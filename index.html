@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="background">
+        
+    </div>
+    <div class="container">
+        <div class="page1">
+            <h1>API-Search Engine</h1>
+            <div class="inputs">
+                <input required type="text" id="userInput" class="userInput" autocomplete="off">
+                <label for="userInput" class="inputLabel">Search anything</label>
+                <button class="searchBtn" aria-label="Search Button"><svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
+                  </svg>
+                </button>
+            </div>
+            <div class="searchResultsContainer">
+    
+                <div class="weatherContainer">
+                    <div class="weatherInfo">
+                        <div class="locationContainer">
+                            <h5 id="location"></h5>
+                            <img src="location-pin.png" id="locationIcon">
+                        </div>
+                        <h5 class="weatherCondition"></h5>
+                        <img src="" class="weatherIcon">
+                        <h3 class="temp"></h3>
+                        <a href="#detailedWeatherSection" class="detailedWeatherBtn">View Detailed Weather</a>
+                    </div>
+                </div>
+    
+                <div class="imgContainer">
+                    <div class="largeImgContainer">
+                        <img class="largeImg">
+                        <p class="seeMore">
+                            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48">
+                                <path fill="#2196f3" d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"></path><path fill="#fff" d="M22 22h4v11h-4V22zM26.5 16.5c0 1.379-1.121 2.5-2.5 2.5s-2.5-1.121-2.5-2.5S22.621 14 24 14 26.5 15.121 26.5 16.5z"></path>
+                                </svg>
+                        </p>
+                        <p class="imageDescription"></p>
+                    </div>
+                    <div class="thumbnails">
+    
+                    </div>
+                </div>  
+    
+            </div>
+        </div>
+       
+        <div id="detailedWeatherSection" class="detailedWeatherSection">
+            <h2>Detailed Weather Information</h2>
+            <div class="weatherDetails">
+                <div class="detail">
+                    <span class="label">Humidity:</span>
+                    <span class="value" id="humidity">--%</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Wind Speed:</span>
+                    <span class="value" id="windSpeed">-- km/h</span>
+                </div>
+                <div class="detail">
+                    <span class="label">Pressure:</span>
+                    <span class="value" id="pressure">-- hPa</span>
+                </div>
+                <div class="forecast">
+                    <h3>Upcoming Forecast</h3>
+                    <ul id="forecastList">
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+            
+    </div>
+    <div class="imageModal hidden">
+        <span class="closeModal">&times;</span>
+        <img class="modalContent" id="fullImage" src="" alt="Full Image">
+    </div>
+    
+    
+
+    
+
+    <script src="script.js"></script>
+</body>
+</html>
