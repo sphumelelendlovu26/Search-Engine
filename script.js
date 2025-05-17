@@ -4,6 +4,7 @@
 const backgroundContainer = document.querySelector('.background');
 const closeModal = document.querySelector(".closeModal");
 const body = document.body;
+const loader = document.querySelector(".loader");
 
 // Input & container elements
 const userInput = document.querySelector(".userInput");
@@ -44,15 +45,29 @@ async function fetchData() {
         return;
     }
     
+    
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${query}&appid=${weatherKey}&units=metric`;
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${query}&appid=${weatherKey}&units=metric`;
     const unsplashUrl = `https://api.unsplash.com/search/photos?query=${query}&client_id=${unsplashKey}`;
-    
-    
+
     thumbnails.innerHTML = "";
+    const cachedWeather = getCachedData(`weather_${query}`, 3600000);
+    const cachedForecast = getCachedData(`forecast_${query}`, 3600000);
+    const cachedUnsplash = getCachedData(`unsplash_${query}`, 86400000);
+
+    if(cachedWeather&&cachedForecast&&cachedUnsplash){
+        console.log("Using cached data");
+        console.log(localStorage);
+        updateWeatherUI(cachedWeather);
+        updateForecastUI(cachedForecast);
+        updateImageGallery(cachedUnsplash);
+        animateValidInputs(cachedUnsplash, cachedWeather);
+        return;
+    }
     
     try {
-        const [unsplashResponse, weatherResponse, forecastResponse] = await Promise.all([
+        const [unsplashResponse, weatherResponse, forecastResponse] = 
+        await Promise.all([
             fetch(unsplashUrl),
             fetch(weatherUrl),
             fetch(forecastUrl)
@@ -68,6 +83,12 @@ async function fetchData() {
         console.log("Weather Data:", weatherData);
         console.log("Unsplash Results:", unsplashResults);
         console.log("Forecast Data:", forecastData);
+         
+
+        setCacheData(`weather_${query}`, weatherData);
+        setCacheData(`forecast_${query}`, forecastData);
+        setCacheData(`unsplash_${query}`, unsplashResults);
+
         if (unsplashResults.length > 0) {
             updateImageGallery(unsplashResults);
         }
@@ -76,139 +97,34 @@ async function fetchData() {
         if (weatherData.cod !== 200) {
             displayWeatherError(weatherData.message);
         } else {
+            loader.style.display = "block";
             updateWeatherUI(weatherData);
             updateForecastUI(forecastData);
+            updateBodyVisibility(forecastData);
+
         }
-        
         animateValidInputs(unsplashResults, weatherData);
-        
-      
+   
+    
     } catch (error) {
         console.error("Could not fetch data:", error);
         alert("Failed to load data. Please check your internet connection and try again.");
+        loader.style.display = "block";
     }
 }
-function noImagesForArea() {
- 
-    Container.innerHTML=`
-        <div class="page1">
-            <h1>API-Search Engine</h1>
-            <div class="inputs">
-                <input required type="text" id="userInput" class="userInput" autocomplete="off">
-                <label for="userInput" class="inputLabel">Search anything</label>
-                <button class="searchBtn" aria-label="Search Button"><svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-                  </svg>
-                </button>
-            </div>
-            <div class="searchResultsContainer">
-                <div class="weatherContainer">
-                    <div class="weatherInfo">
-                        <div class="locationContainer">
-                            <h5 id="location"></h5>
-                            <img src="location-pin.png" id="locationIcon">
-                        </div>
-                        <h5 class="weatherCondition"></h5>
-                        <img src="" class="weatherIcon">
-                        <h3 class="temp"></h3>
-                        <a href="#detailedWeatherSection" class="detailedWeatherBtn">View Detailed Weather</a>
-                    </div>
-                </div>
-                 <div id="detailedWeatherSection" class="detailedWeatherSection">
-                <h2>Detailed Weather Information</h2>
-                <div class="weatherDetails">
-                    <div class="detail">
-                        <span class="label">Humidity:</span>
-                        <span class="value" id="humidity">--%</span>
-                    </div>
-                    <div class="detail">
-                        <span class="label">Wind Speed:</span>
-                        <span class="value" id="windSpeed">-- km/h</span>
-                    </div>
-                    <div class="detail">
-                        <span class="label">Pressure:</span>
-                        <span class="value" id="pressure">-- hPa</span>
-                    </div>
-                    <div class="forecast">
-                        <h3>Upcoming Forecast</h3>
-                        <ul id="forecastList">
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-                `
-}
-function imgsAvailableForArea(){
-     Container.innerHTML=`
-         <div class="page1">
-            <h1>API-Search Engine</h1>
-            <div class="inputs">
-                <input required type="text" id="userInput" class="userInput" autocomplete="off">
-                <label for="userInput" class="inputLabel">Search anything</label>
-                <button class="searchBtn" aria-label="Search Button"><svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/>
-                  </svg>
-                </button>
-            </div>
-            <div class="searchResultsContainer">
-    
-                <div class="weatherContainer">
-                    <div class="weatherInfo">
-                        <div class="locationContainer">
-                            <h5 id="location"></h5>
-                            <img src="location-pin.png" id="locationIcon">
-                        </div>
-                        <h5 class="weatherCondition"></h5>
-                        <img src="" class="weatherIcon">
-                        <h3 class="temp"></h3>
-                        <a href="#detailedWeatherSection" class="detailedWeatherBtn">View Detailed Weather</a>
-                    </div>
-                </div>
-    
-                <div class="imgContainer">
-                    <div class="largeImgContainer">
-                        <img class="largeImg">
-                        <p class="seeMore">
-                            <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48">
-                                <path fill="#2196f3" d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"></path><path fill="#fff" d="M22 22h4v11h-4V22zM26.5 16.5c0 1.379-1.121 2.5-2.5 2.5s-2.5-1.121-2.5-2.5S22.621 14 24 14 26.5 15.121 26.5 16.5z"></path>
-                                </svg>
-                        </p>
-                        <p class="imageDescription"></p>
-                    </div>
-                    <div class="thumbnails">
-    
-                    </div>
-                </div>  
-    
-            </div>
-        </div>
-       
-        <div id="detailedWeatherSection" class="detailedWeatherSection">
-            <h2>Detailed Weather Information</h2>
-            <div class="weatherDetails">
-                <div class="detail">
-                    <span class="label">Humidity:</span>
-                    <span class="value" id="humidity">--%</span>
-                </div>
-                <div class="detail">
-                    <span class="label">Wind Speed:</span>
-                    <span class="value" id="windSpeed">-- km/h</span>
-                </div>
-                <div class="detail">
-                    <span class="label">Pressure:</span>
-                    <span class="value" id="pressure">-- hPa</span>
-                </div>
-                <div class="forecast">
-                    <h3>Upcoming Forecast</h3>
-                    <ul id="forecastList">
-                    </ul>
-                </div>
-            </div>
-        </div>
-     `
-}
 
+
+function setCacheData(key, data){
+    localStorage.setItem(key, JSON.stringify({data, timestamp: Date.now()}));
+}
+function getCachedData(key, maxAge){
+    const cachedData= localStorage.getItem(key);
+    if(!cachedData){
+        return null;
+    }
+    const parsedCache = JSON.parse(cachedData);
+    return Date.now() - parsedCache.timestamp < maxAge ? parsedCache.data:null;
+}
 
 function displayWeatherError(message) {
     locations.innerText = "Error: " + message;
@@ -218,10 +134,7 @@ function displayWeatherError(message) {
     locationIcon.style.opacity = "0";
     detailedWeatherSection.style.display = "none";
 }
-
-
 function updateWeatherUI(weatherData) {
-    
     modalContent.src = "";
     body.style.overflow = "scroll";
    
@@ -229,20 +142,30 @@ function updateWeatherUI(weatherData) {
     detailedWeatherBtn.style.display = "inline-block";
     locations.innerText = weatherData.name;
     weatherInfo.style.animation = "locationAnimation 1.5s ease-in-out";
+    
     locationIcon.style.opacity = "1";
+    if (!weatherData || !weatherData.weather || weatherData.weather.length === 0) {
+    console.error("Invalid weather data received!", weatherData);
+    weatherContainer.style.width ="0";
+    weatherContainer.style.overflow ="hidden";
+    return; 
+}
+
+
+    if (weatherData.weather && weatherData.weather.length > 0) {
     weatherIcon.src = `https://openweathermap.org/img/w/${weatherData.weather[0].icon}.png`;
+    } else {
+    console.error("Weather data missing or empty!", weatherData);
+    }
+
     temp.innerText = `${Math.floor(weatherData.main.temp)} °C`;
     weatherCondition.innerText = weatherData.weather[0].main;
     weatherContainer.style.width = "40%";
     weatherContainer.style.height = "auto";
     weatherContainer.style.overflow = "auto";
     
-
     animateTemperatureRange(weatherData.main.temp);
-    
     imageDescription.style.opacity = "0";
-    
-   
     document.getElementById("humidity").innerText = weatherData.main.humidity + "%";
     document.getElementById("windSpeed").innerText = weatherData.wind.speed + " km/h";
     document.getElementById("pressure").innerText = weatherData.main.pressure + " hPa";
@@ -312,11 +235,10 @@ if(unsplashResults && unsplashResults.length > 0){
         thumbnails.appendChild(newImg);
         
         newImg.addEventListener("click", () => {
-          
             resetImageState();
             largeImg.classList.add("hidden");
             seeMore.classList.add("hidden");
-            
+            loader.style.display = "block";
             setTimeout(() => {
                 largeImg.src = result.urls.regular;
                 largeImg.classList.remove("hidden");
@@ -327,7 +249,12 @@ if(unsplashResults && unsplashResults.length > 0){
                     <path fill="#2196f3" d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"></path>
                     <path fill="#fff" d="M22 22h4v11h-4V22zM26.5 16.5c0 1.379-1.121 2.5-2.5 2.5s-2.5-1.121-2.5-2.5S22.621 14 24 14 26.5 15.121 26.5 16.5z"></path>
                 </svg>`;
-            }, 300);
+            }, 1000);
+            largeImg.onload = () =>{
+                 setTimeout(() => {
+                    loader.style.display = "none"; 
+                }, 150); 
+            }
             modalContent.src = "";
         });
     });
@@ -338,20 +265,25 @@ if(unsplashResults && unsplashResults.length > 0){
     
 
     largeImg.addEventListener("click", () => {
+        
+        modalContent.src = "";
+        loader.style.display = "block";
         modalContent.src = currentImg.urls.raw;
         modal.classList.remove("hidden");
         inputsContainer.style.zIndex = "0";
+        modalContent.onload= () => {
+                setTimeout(() => {
+                    loader.style.display = "none"; 
+                }, 100); 
+        };
+
     });
 }
     
 }
-
-
 function resetImageState() {
     imageDescription.innerText = "";
 }
-
-
 function toggleImageDescription(currentImg) {
     if (!currentImg) return;
     
@@ -379,18 +311,13 @@ function toggleImageDescription(currentImg) {
             </svg>`;
     }
 }
-
-
-searchBtn.addEventListener("click", fetchData);
-
+searchBtn.addEventListener("click",()=>{
+    fetchData()
+    document.querySelector(".searchResultsContainer").classList.add("fade-in");
+    });
 closeModal.addEventListener("click", () => {
     modal.classList.add("hidden");
 });
-
-
-
-
-
 function animateInvalidInputs() {
     let { unsplashResults, weatherData } = window.latestResults || {};
     if (!unsplashResults.length > 0 || !weatherData) {
@@ -400,6 +327,7 @@ function animateInvalidInputs() {
 }
 
 searchBtn.addEventListener("click", function () {
+    body.classList.add("fade-in");
     fetchData();
 });
 
@@ -410,59 +338,45 @@ userInput.addEventListener("keydown", function (e) {
 });
 closeModal.addEventListener("click", function () {
     document.querySelector(".imageModal").classList.add("hidden");
-    inputsContainer.style.zIndex ="100";
-    
+    inputsContainer.style.zIndex ="100";  
 });
-
-
-function animateTemperatureRange(temperature) {
+function animateTemperatureRange(temperature, weatherCondition) {
     backgroundContainer.innerHTML = "";
+    const fragment = document.createDocumentFragment(); 
 
-    if (temperature < 0) {
-        for (let i = 0; i < 50; i++) {
-            const snowflake = document.createElement('div');
-            snowflake.classList.add('snowflake');
-            snowflake.style.left = `${Math.random() * 100}vw`;
-            snowflake.style.animationDuration = `${Math.random() * 6 + 2}s`;
-            backgroundContainer.appendChild(snowflake);
-        }
-    } else if (temperature >= 0 && temperature <= 15 && weatherCondition.innerText !=="Rain") {
-        for (let i = 0; i < 30; i++) {
-            const leaf = document.createElement('div');
-            leaf.classList.add('leaf');
-            leaf.style.left = `${Math.random() * 100}vw`;
-            leaf.style.animationDuration = `${Math.random() * 5 + 2}s`;
-            backgroundContainer.appendChild(leaf);
-        }
-    } else if (temperature > 15 && temperature <= 30 && weatherCondition.innerText !=="Rain") {
-        for (let i = 0; i < 40; i++) {
-            const sunbeam = document.createElement('div');
-            sunbeam.classList.add('sunbeam');
-            sunbeam.style.left = `${Math.random() * 100}vw`;
-            sunbeam.style.animationDuration = `${Math.random() * 4 + 1}s`;
-            backgroundContainer.appendChild(sunbeam);
-        }
-    } else if(weatherCondition.innerText ==="Rain"){
-        const maxRaindrops = 100; 
-        for (let i = 0; i < maxRaindrops; i++) {
-            const raindrop = document.createElement('div');
-            raindrop.classList.add('raindrop');
-            raindrop.style.left = `${Math.random() * 100}vw`;
-            raindrop.style.animationDuration = `${Math.random() * 8 + 1}s`;
-            raindrop.style.animationDelay = 0;
-            backgroundContainer.appendChild(raindrop);
-        }
+    if (weatherCondition === "Rain") {
+        generateElements(fragment, "raindrop", 100, "raindrop-fall");
+    } else if (temperature < 0) {
+        generateElements(fragment, "snowflake", 50, "snowflake-fall");
+    } else if (temperature >= 0 && temperature <= 15) {
+        generateElements(fragment, "leaf", 30, "leaf-fall");
+    } else if (temperature > 15 && temperature <= 30) {
+        generateElements(fragment, "sunbeam", 40, "sunbeam-rise");
+    } else {
+        generateElements(fragment, "heatwave", 20, "heatwave-expand");
     }
-    else {
-        
-        for (let i = 0; i < 20; i++) {
-            const heatwave = document.createElement('div');
-            heatwave.classList.add('heatwave');
-            heatwave.style.left = `${Math.random() * 100}vw`;
-            heatwave.style.animationDuration = `${Math.random() * 8 + 5}s`;
-            backgroundContainer.appendChild(heatwave);
-        }
+
+    backgroundContainer.appendChild(fragment); 
+}
+function updateBodyVisibility(forecastData){
+    if(forecastData && forecastData.list.length>0 && forecastData.list){
+        backgroundContainer.style.height = "200vh"
+    }
+    else{
+        backgroundContainer.style.height = "100vh";
+        body.style.overflow ="hidden"
     }
 }
 
+function generateElements(fragment, className, count, animationName) {
+    for (let i = 0; i < count; i++) {
+        const element = document.createElement("div");
+        element.classList.add(className);
+        element.style.left = `${Math.random() * 100}vw`;
+        element.style.top = `${Math.random() * 100}vh`;
+        element.style.animationDuration = `${Math.random() * 8 + 2}s`;
+        element.style.animationName = animationName;
+        fragment.appendChild(element); 
+    }
+}
 
