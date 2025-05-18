@@ -217,70 +217,102 @@ function animateValidInputs(unsplashResults, weatherData) {
     }
 }
 
-function updateImageGallery(unsplashResults) {
-    
-if(unsplashResults && unsplashResults.length > 0){
-    imgContainer.style.opacity = "1";
-    imgContainer.style.display="block";
- 
-    largeImg.src = unsplashResults[0].urls.regular;
-    largeImg.classList.add("displayedImg");
-    modalContent.src = unsplashResults[0].urls.raw;
-    
-    let currentImg = unsplashResults[0];
-    
-    unsplashResults.forEach(result => {
-        const newImg = document.createElement("img");
-        newImg.src = result.urls.thumb;
-        thumbnails.appendChild(newImg);
-        
-        newImg.addEventListener("click", () => {
-            resetImageState();
-            largeImg.classList.add("hidden");
-            seeMore.classList.add("hidden");
-            loader.style.display = "block";
-            setTimeout(() => {
-                largeImg.src = result.urls.regular;
-                largeImg.classList.remove("hidden");
-                currentImg = result;
-                seeMore.classList.remove("hidden");
-                seeMore.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 48 48">
-                    <path fill="#2196f3" d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"></path>
-                    <path fill="#fff" d="M22 22h4v11h-4V22zM26.5 16.5c0 1.379-1.121 2.5-2.5 2.5s-2.5-1.121-2.5-2.5S22.621 14 24 14 26.5 15.121 26.5 16.5z"></path>
-                </svg>`;
-            }, 1000);
-            largeImg.onload = () =>{
-                 setTimeout(() => {
-                    loader.style.display = "none"; 
-                }, 150); 
-            }
-            modalContent.src = "";
-        });
-    });
-    
-    seeMore.addEventListener("click", () => {
-        toggleImageDescription(currentImg);
-    });
-    
+let imgInterval; 
 
-    largeImg.addEventListener("click", () => {
-        
-        modalContent.src = "";
-        loader.style.display = "block";
-        modalContent.src = currentImg.urls.raw;
-        modal.classList.remove("hidden");
-        inputsContainer.style.zIndex = "0";
-        modalContent.onload= () => {
+function updateImageGallery(unsplashResults) {
+    if (unsplashResults && unsplashResults.length > 0) {
+        window.latestResults = { unsplashResults }; 
+        imgContainer.style.opacity = "1";
+        imgContainer.style.display = "block";
+
+        function startAutoChange() {
+            clearInterval(imgInterval); 
+            imgInterval = setInterval(changeImage, 7000);
+        }
+
+        function changeImage() {
+            if (!window.latestResults || !window.latestResults.unsplashResults.length) return;
+
+            largeImg.style.opacity = "0";
+            seeMore.style.opacity = "0";
+            largeImg.style.transform = "scale(0.7)";
+            seeMore.style.transform = "scale(0.3)";
+
+            setTimeout(() => {
+                let randomIndex = Math.floor(Math.random() * window.latestResults.unsplashResults.length);
+                largeImg.src = window.latestResults.unsplashResults[randomIndex].urls.regular;
+                modalContent.src = window.latestResults.unsplashResults[randomIndex].urls.raw;
+                largeImg.style.opacity = "1";
+                seeMore.style.opacity = "1";
+                largeImg.style.transform = "scale(1)";
+                seeMore.style.transform = "scale(1)";
+            }, 400);
+        }
+
+        startAutoChange();
+        changeImage();
+        largeImg.classList.add("displayedImg");
+        modalContent.src = unsplashResults[0].urls.raw;
+
+        let currentImg = unsplashResults[0];
+
+        unsplashResults.forEach(result => {
+            const newImg = document.createElement("img");
+            newImg.src = result.urls.thumb;
+            thumbnails.appendChild(newImg);
+
+            newImg.addEventListener("click", () => {
+                clearInterval(imgInterval); 
+                resetImageState();
+
+                largeImg.classList.add("hidden");
+                seeMore.classList.add("hidden");
+                loader.style.display = "block";
+
+                setTimeout(() => {
+                    largeImg.src = result.urls.regular;
+                    largeImg.classList.remove("hidden");
+                    currentImg = result;
+                    seeMore.classList.remove("hidden");
+
+                    seeMore.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 48 48">
+                        <path fill="#2196f3" d="M44,24c0,11.045-8.955,20-20,20S4,35.045,4,24S12.955,4,24,4S44,12.955,44,24z"></path>
+                        <path fill="#fff" d="M22 22h4v11h-4V22zM26.5 16.5c0 1.379-1.121 2.5-2.5 2.5s-2.5-1.121-2.5-2.5S22.621 14 24 14 26.5 15.121 26.5 16.5z"></path>
+                    </svg>`;
+                }, 1000);
+
+                largeImg.onload = () => {
+                    setTimeout(() => {
+                        loader.style.display = "none"; 
+                    }, 150);
+                };
+
+                modalContent.src = "";
+                setTimeout(startAutoChange, 5000); 
+            });
+        });
+
+        seeMore.addEventListener("click", () => {
+            toggleImageDescription(currentImg);
+        });
+
+        largeImg.addEventListener("click", () => {
+            modalContent.src = "";
+            loader.style.display = "block";
+            modalContent.src = currentImg.urls.raw;
+            modal.classList.remove("hidden");
+            inputsContainer.style.zIndex = "0";
+
+            modalContent.onload = () => {
                 setTimeout(() => {
                     loader.style.display = "none"; 
                 }, 100); 
-        };
+            };
+        });
+    }
+}
 
-    });
-}
-    
-}
 function resetImageState() {
     imageDescription.innerText = "";
 }
